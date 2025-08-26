@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,33 +19,19 @@
 <script>
 const map = L.map('map').setView([35.5175, -86.5804], 7);
 
-// OpenStreetMap base layer
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
-}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+L.tileLayer('https://www.meteo.psu.edu/ewall/HRRR15_CUR/{z}/{x}/{y}.png', {attribution:'HRRR Radar'}).addTo(map);
+L.tileLayer('https://www.meteo.psu.edu/ewall/PSUGOES_US/loop30i/{z}/{x}/{y}.png', {attribution:'GOES Satellite'}).addTo(map);
 
-// Radar overlay (HRRR)
-L.tileLayer('https://www.meteo.psu.edu/ewall/HRRR15_CUR/{z}/{x}/{y}.png', {
-  attribution: 'HRRR Radar'
-}).addTo(map);
-
-// Satellite overlay (GOES)
-L.tileLayer('https://www.meteo.psu.edu/ewall/PSUGOES_US/loop30i/{z}/{x}/{y}.png', {
-  attribution: 'GOES Satellite'
-}).addTo(map);
-
-// Load TN counties GeoJSON
 fetch('data/geojson/tn_counties.geojson')
   .then(resp => resp.json())
   .then(geojson => {
     L.geoJSON(geojson, {
-      style: {color: "#555", weight: 1, fillOpacity: 0.2},
+      style: {color:"#555", weight:1, fillOpacity:0.2},
       onEachFeature: function(feature, layer) {
         layer.on('click', function() {
           const lat = layer.getBounds().getCenter().lat;
           const lon = layer.getBounds().getCenter().lng;
-
-          // Fetch weather using OpenWeatherMap OneCall API
           fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&units=imperial&appid=97b4fc10b44d9bdb0d5525a888e39487`)
             .then(res => res.json())
             .then(weather => {
@@ -52,12 +39,11 @@ fetch('data/geojson/tn_counties.geojson')
               popupContent += `Current: ${weather.current.temp}°F, ${weather.current.weather[0].description}<br>`;
               popupContent += '<strong>7-Day Forecast:</strong><br>';
               weather.daily.forEach(day => {
-                const date = new Date(day.dt * 1000);
+                const date = new Date(day.dt*1000);
                 popupContent += `${date.toDateString()}: ${day.temp.day}°F, ${day.weather[0].main}<br>`;
               });
               layer.bindPopup(popupContent).openPopup();
-            })
-            .catch(err => {
+            }).catch(err => {
               layer.bindPopup('Weather data not available').openPopup();
               console.error(err);
             });
